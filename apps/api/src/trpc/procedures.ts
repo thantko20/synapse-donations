@@ -1,0 +1,17 @@
+import { initTRPC } from "@trpc/server";
+
+export const t = initTRPC.create();
+
+export const publicProcedure = t.procedure;
+
+export const authProcedure = t.procedure.use((opts) => {
+	return opts.next({});
+});
+
+export const platformAdminProcedure = t.procedure.use((opts) => {
+	return opts.next({});
+});
+
+export const organizationProcedure = t.procedure.use((opts) => {
+	return opts.next({});
+});

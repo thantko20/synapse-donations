@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String  @id @default(uuid(7))
+  email      String  @unique
+  name       String
+  isVerified Boolean @default(false) @map("is_verified")
+
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  organizations Organization[]
+  sessions      Session[]
+  platformAdmin PlatformAdmin?
+  orgMember     OrgMembers?
+  donor         Donor?
+  donations     Donation[]
+
+  @@map("users")
+}
+
+model UserCredentials {
+  id             String   @id @default(uuid(7))
+  userId         String   @unique @map("user_id")
+  passwordHash   String?  @map("password_hash")
+  salt           String?
+  provider       String   @default("local")
+  providerUserId String?  @map("provider_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("user_credentials")
+}
+
+enum SessionUserType {
+  ADMIN
+  DONOR
+  ORG
+}
+
+model Session {
+  id        String          @id @default(uuid(7))
+  userId    String          @map("user_id")
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String          @unique
+  userType  SessionUserType @map("user_type")
+  ipAddress String?         @map("ip_address")
+  userAgent String?         @map("user_agent")
+  expiresAt DateTime        @map("expires_at")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  @@map("sessions")
+}
+
+model PlatformAdmin {
+  id        String   @id @default(uuid(7))
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("platform_admins")
+}
+
+enum OrganizationVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Organization {
+  id                 String                         @id @default(uuid(7))
+  legalName          String                         @map("legal_name")
+  displayName        String                         @map("display_name")
+  description        String?
+  website            String?
+  logoUrl            String?                        @map("logo_url")
+  registrationNumber String?                        @map("registration_number")
+  verificationStatus OrganizationVerificationStatus @default(PENDING) @map("verification_status")
+  ownerUserId        String                         @map("owner_user_id")
+  owner              User                           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  createdAt          DateTime                       @default(now()) @map("created_at")
+  updatedAt          DateTime                       @updatedAt @map("updated_at")
+  OrgMembers         OrgMembers[]
+  campaigns          Campaign[]
+
+  @@map("organizations")
+}
+
+model OrgMembers {
+  id             String   @id @default(uuid(7))
+  organizationId String   @map("organization_id")
+  userId         String   @unique @map("user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("org_members")
+}
+
+model Donor {
+  id        String     @id @default(uuid(7))
+  userId    String     @unique @map("user_id")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now()) @map("created_at")
+  donations Donation[]
+
+  @@map("donors")
+}
+
+enum GoalType {
+  AMOUNT
+  ITEMS
+  VOLUNTEERS
+}
+
+model Campaign {
+  id                String       @id @default(uuid(7))
+  name              String
+  description       String
+  startAt           DateTime     @map("start_at")
+  endAt             DateTime     @map("end_at")
+  targetAmountMinor Int          @map("target_amount_minor")
+  goalType          GoalType?    @map("goal_type")
+  minDonationMinor  Int?         @map("min_donation_minor")
+  maxDonationMinor  Int?         @map("max_donation_minor")
+  orgId             String       @map("org_id")
+  organization      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  donations         Donation[]
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@map("campaigns")
+}
+
+model Donation {
+  id            String   @id @default(uuid(7))
+  campaignId    String   @map("campaign_id")
+  donorUserId   String   @map("donor_user_id")
+  amountMinor   Int      @map("amount_minor")
+  paymentMethod String   @map("payment_method")
+  isAnonymous   Boolean  @map("is_anonymous")
+  message       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  campaign  Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  donorUser User     @relation(fields: [donorUserId], references: [id], onDelete: Cascade, map: "donations_user_fkey")
+  donor     Donor    @relation(fields: [donorUserId], references: [userId], onDelete: Cascade, map: "donations_donor_fkey")
+
+  @@map("donations")
+}

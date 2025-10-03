@@ -1,0 +1,23 @@
+{
+  "name": "api",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.5",
+    "@hono/trpc-server": "^0.4.0",
+    "@prisma/client": "6.16.3",
+    "@trpc/server": "^11.6.0",
+    "hono": "^4.9.9",
+    "@repo/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "prisma": "^6.16.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}
