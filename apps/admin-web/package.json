@@ -1,5 +1,5 @@
 {
-  "name": "admin-web",
+  "name": "@repo/admin-web",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,14 +12,23 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@repo/ui": "workspace:*",
+    "@tailwindcss/vite": "^4.1.14",
+    "@tanstack/react-query": "^5.90.2",
     "@tanstack/react-router": "^1.132.31",
+    "@tanstack/react-router-ssr-query": "^1.132.33",
     "@tanstack/react-start": "^1.132.32",
+    "@trpc/client": "^11.6.0",
+    "@trpc/tanstack-react-query": "^11.6.0",
     "@vitejs/plugin-react": "^5.0.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "superjson": "^2.2.2",
+    "tailwindcss": "^4.1.14",
     "vite": "^7.1.9"
   },
   "devDependencies": {
+    "@repo/api": "workspace:*",
     "@types/node": "^24.6.2",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.1",

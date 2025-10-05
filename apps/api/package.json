@@ -1,6 +1,9 @@
 {
-  "name": "api",
+  "name": "@repo/api",
   "type": "module",
+  "exports": {
+    "./trpc": "./src/trpc/index.ts"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -10,9 +13,10 @@
     "@hono/node-server": "^1.19.5",
     "@hono/trpc-server": "^0.4.0",
     "@prisma/client": "6.16.3",
+    "@repo/shared": "workspace:*",
     "@trpc/server": "^11.6.0",
     "hono": "^4.9.9",
-    "@repo/shared": "workspace:*"
+    "superjson": "^2.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",

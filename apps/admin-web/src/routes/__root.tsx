@@ -1,14 +1,21 @@
 // src/routes/__root.tsx
 /// <reference types="vite/client" />
+// import "@repo/ui/globals.css";
+import appCss from "../styles/app.css?url";
 import type { ReactNode } from "react";
 import {
   Outlet,
-  createRootRoute,
   HeadContent,
   Scripts,
+  createRootRouteWithContext,
 } from "@tanstack/react-router";
+import { QueryClient } from "@tanstack/react-query";
+import type { trpc } from "../lib/tanstack-query";
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+  trpc: typeof trpc;
+}>()({
   head: () => ({
     meta: [
       {
@@ -22,6 +29,7 @@ export const Route = createRootRoute({
         title: "TanStack Start Starter",
       },
     ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   component: RootComponent,
 });
