@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -24,55 +18,53 @@ model User {
   updatedAt     DateTime       @updatedAt @map("updated_at")
   organizations Organization[]
   sessions      Session[]
-  platformAdmin PlatformAdmin?
   orgMember     OrgMembers?
   donor         Donor?
   donations     Donation[]
+  passwordHash  String         @map("password_hash")
 
   @@map("users")
 }
 
-model UserCredentials {
-  id             String   @id @default(uuid(7))
-  userId         String   @unique @map("user_id")
-  passwordHash   String?  @map("password_hash")
-  salt           String?
-  provider       String   @default("local")
-  providerUserId String?  @map("provider_user_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  @@map("user_credentials")
-}
-
-enum SessionUserType {
-  ADMIN
-  DONOR
-  ORG
-}
-
 model Session {
-  id        String          @id @default(uuid(7))
-  userId    String          @map("user_id")
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String          @unique
-  userType  SessionUserType @map("user_type")
-  ipAddress String?         @map("ip_address")
-  userAgent String?         @map("user_agent")
-  expiresAt DateTime        @map("expires_at")
-  createdAt DateTime        @default(now()) @map("created_at")
-  updatedAt DateTime        @updatedAt @map("updated_at")
+  id        String   @id @default(uuid(7))
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("sessions")
 }
 
-model PlatformAdmin {
-  id        String   @id @default(uuid(7))
-  userId    String   @unique @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
+model Admin {
+  id           String @id @default(uuid(7))
+  email        String @unique
+  name         String
+  passwordHash String @map("password_hash")
+
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  sessions  AdminSession[]
 
   @@map("platform_admins")
+}
+
+model AdminSession {
+  id        String   @id @default(uuid(7))
+  adminId   String   @map("admin_id")
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_sessions")
 }
 
 enum OrganizationVerificationStatus {
