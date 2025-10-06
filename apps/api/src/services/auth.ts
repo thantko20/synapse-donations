@@ -1,30 +1,47 @@
-import type { LoginAdminInput } from "@repo/shared/schemas";
+import type { LoginAdminInput, RegisterUserInput } from "@repo/shared/schemas";
 import { type AppPrisma } from "../../prisma/index.js";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcrypt";
 
-function invalidCredentialsError(): never {
-  throw new TRPCError({
+type BaseCtx = {
+  prisma: AppPrisma;
+};
+
+export function invalidCredentialsError() {
+  return new TRPCError({
     code: "BAD_REQUEST",
     message: "Invalid email or password",
   });
 }
 
-export const login = async (prisma: AppPrisma, input: LoginAdminInput) => {
+export function userWithEmailExistsError() {
+  return new TRPCError({
+    code: "CONFLICT",
+    message: "User with this email already exists",
+  });
+}
+
+type LoginAdminCtx = BaseCtx & {};
+
+export const loginAdmin = async (
+  ctx: LoginAdminCtx,
+  input: LoginAdminInput
+) => {
+  const { prisma } = ctx;
   const admin = await prisma.admin.findFirst({
     where: {
       email: input.email,
     },
   });
   if (!admin) {
-    invalidCredentialsError();
+    throw invalidCredentialsError();
   }
   const isValidPassword = await bcrypt.compare(
     input.password,
     admin.passwordHash
   );
   if (!isValidPassword) {
-    invalidCredentialsError();
+    throw invalidCredentialsError();
   }
 
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
@@ -47,4 +64,32 @@ export const login = async (prisma: AppPrisma, input: LoginAdminInput) => {
       updatedAt: admin.updatedAt,
     },
   };
+};
+
+type RegisterUserCtx = BaseCtx & {};
+
+export const registerUser = async (
+  { prisma }: RegisterUserCtx,
+  input: RegisterUserInput
+) => {
+  const existingUser = await prisma.user.findUnique({
+    select: { id: true },
+    where: { email: input.email },
+  });
+
+  if (existingUser) {
+    throw userWithEmailExistsError();
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, 10);
+
+  const user = await prisma.user.create({
+    data: {
+      email: input.email,
+      name: input.name,
+      passwordHash,
+    },
+  });
+
+  return { id: user.id };
 };

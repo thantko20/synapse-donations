@@ -11,10 +11,9 @@
     "create-admin": "tsx src/scripts/create-admin.ts",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:db:up": "docker compose -f ../../docker-compose.test.yml up -d",
-    "test:db:down": "docker compose -f ../../docker-compose.test.yml down",
     "test:db:reset": "npm run test:db:down && npm run test:db:up && sleep 5 && npm run db:migrate:test",
-    "db:migrate:test": "dotenv -e .env.test -- prisma migrate dev --name init"
+    "db:migrate:test": "dotenv -e .env.test -- prisma migrate dev --name init",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.5",

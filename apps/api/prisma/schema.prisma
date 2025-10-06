@@ -19,7 +19,6 @@ model User {
   organizations Organization[]
   sessions      Session[]
   orgMember     OrgMembers?
-  donor         Donor?
   donations     Donation[]
   passwordHash  String         @map("password_hash")
 
@@ -106,16 +105,6 @@ model OrgMembers {
   @@map("org_members")
 }
 
-model Donor {
-  id        String     @id @default(uuid(7))
-  userId    String     @unique @map("user_id")
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime   @default(now()) @map("created_at")
-  donations Donation[]
-
-  @@map("donors")
-}
-
 enum GoalType {
   AMOUNT
   ITEMS
@@ -154,7 +143,6 @@ model Donation {
 
   campaign  Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   donorUser User     @relation(fields: [donorUserId], references: [id], onDelete: Cascade, map: "donations_user_fkey")
-  donor     Donor    @relation(fields: [donorUserId], references: [userId], onDelete: Cascade, map: "donations_donor_fkey")
 
   @@map("donations")
 }

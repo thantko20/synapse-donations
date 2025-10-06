@@ -1,8 +1,25 @@
 import { config } from "dotenv";
 import { resolve } from "path";
+import { beforeEach } from "vitest";
+import { prisma, type AppPrisma } from "./prisma/index.js";
 
 // Load test environment variables
 config({ path: resolve(process.cwd(), ".env.test") });
 
-// Ensure we're in test environment
 process.env.NODE_ENV = "test";
+
+const resetDatabase = async (prisma: AppPrisma) => {
+  await prisma.$transaction(async (tx) => {
+    await tx.adminSession.deleteMany();
+    await tx.admin.deleteMany();
+    await tx.user.deleteMany();
+    await tx.orgMembers.deleteMany();
+    await tx.organization.deleteMany();
+    await tx.donation.deleteMany();
+    await tx.campaign.deleteMany();
+  });
+};
+
+beforeEach(() => {
+  resetDatabase(prisma);
+});
