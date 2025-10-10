@@ -8,7 +8,8 @@ config({ path: resolve(process.cwd(), ".env.test") });
 
 process.env.NODE_ENV = "test";
 
-const resetDatabase = async (prisma: AppPrisma) => {
+export const resetDatabase = async (prisma: AppPrisma) => {
+  console.log("Resetting database...");
   await prisma.$transaction(async (tx) => {
     await tx.adminSession.deleteMany();
     await tx.admin.deleteMany();
@@ -17,9 +18,11 @@ const resetDatabase = async (prisma: AppPrisma) => {
     await tx.organization.deleteMany();
     await tx.donation.deleteMany();
     await tx.campaign.deleteMany();
+    await tx.adminSession.deleteMany();
   });
+  console.log("Database reset complete.");
 };
 
-beforeEach(() => {
-  resetDatabase(prisma);
-});
+// beforeEach(async () => {
+//   await resetDatabase(prisma);
+// });

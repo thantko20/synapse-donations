@@ -7,7 +7,7 @@ export const authRouter = router({
   loginAdmin: publicProcedure
     .input(loginAdminSchema)
     .mutation(async ({ input, ctx }) => {
-      const result = await loginAdmin(ctx.prisma, input);
+      const result = await loginAdmin({ prisma: ctx.prisma }, input);
       setCookie(ctx.c, "session_token", result.session.token, {
         httpOnly: true,
         secure: false,

@@ -18,6 +18,7 @@
   "dependencies": {
     "@hono/node-server": "^1.19.5",
     "@hono/trpc-server": "^0.4.0",
+    "@hono/zod-validator": "^0.7.4",
     "@prisma/client": "6.16.3",
     "@repo/shared": "workspace:*",
     "@trpc/server": "^11.6.0",

@@ -1,4 +1,8 @@
-import type { LoginAdminInput, RegisterUserInput } from "@repo/shared/schemas";
+import type {
+  LoginAdminInput,
+  RegisterUserInput,
+  LoginUserInput,
+} from "@repo/shared/schemas";
 import { type AppPrisma } from "../../prisma/index.js";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcrypt";
@@ -92,4 +96,47 @@ export const registerUser = async (
   });
 
   return { id: user.id };
+};
+
+type LoginUserCtx = BaseCtx & {};
+
+export const loginUser = async (ctx: LoginUserCtx, input: LoginUserInput) => {
+  const { prisma } = ctx;
+  const user = await prisma.user.findFirst({
+    where: {
+      email: input.email,
+    },
+  });
+  if (!user) {
+    throw invalidCredentialsError();
+  }
+  const isValidPassword = await bcrypt.compare(
+    input.password,
+    user.passwordHash
+  );
+  if (!isValidPassword) {
+    throw invalidCredentialsError();
+  }
+
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
+
+  const session = await prisma.session.create({
+    data: {
+      userId: user.id,
+      expiresAt,
+      token: crypto.randomUUID(),
+    },
+  });
+
+  return {
+    session,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    },
+  };
 };

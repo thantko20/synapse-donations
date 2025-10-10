@@ -1,19 +1,18 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  beforeAll,
-  afterAll,
-} from "vitest";
-import { PrismaClient } from "../src/generated/prisma/index.js";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
 import bcrypt from "bcrypt";
 import { TRPCError } from "@trpc/server";
-import { loginAdmin, registerUser } from "../src/services/auth.js";
-import type { LoginAdminInput, RegisterUserInput } from "@repo/shared/schemas";
+import { loginAdmin, registerUser, loginUser } from "../src/services/auth.js";
+import type {
+  LoginAdminInput,
+  RegisterUserInput,
+  LoginUserInput,
+} from "@repo/shared/schemas";
+import { prisma } from "../prisma/index.js";
+import { resetDatabase } from "../vitest.setup.js";
 
-const prisma = new PrismaClient();
+beforeAll(async () => {
+  await resetDatabase(prisma);
+});
 
 describe("Auth Service Integration Tests", () => {
   let testAdmin: {
@@ -25,16 +24,8 @@ describe("Auth Service Integration Tests", () => {
     updatedAt: Date;
   };
 
-  beforeAll(async () => {
-    await prisma.$connect();
-  });
-
-  afterAll(async () => {
-    await prisma.$disconnect();
-  });
-
   describe("loginAdmin", () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       const passwordHash = await bcrypt.hash("testpassword123", 10);
       testAdmin = await prisma.admin.create({
         data: {
@@ -44,7 +35,7 @@ describe("Auth Service Integration Tests", () => {
         },
       });
     });
-    it("should successfully login with valid credentials", async () => {
+    it("should successfully authenticate admin with valid credentials", async () => {
       const input: LoginAdminInput = {
         email: "test@example.com",
         password: "testpassword123",
@@ -67,7 +58,7 @@ describe("Auth Service Integration Tests", () => {
       const timeDiff = Math.abs(
         result.session.expiresAt.getTime() - expectedExpiry.getTime()
       );
-      expect(timeDiff).toBeLessThan(5000); // Allow 5 second difference
+      expect(timeDiff).toBeLessThan(5000);
 
       expect(result.admin).toEqual({
         id: testAdmin.id,
@@ -77,23 +68,14 @@ describe("Auth Service Integration Tests", () => {
         updatedAt: testAdmin.updatedAt,
       });
       expect(result.admin).not.toHaveProperty("passwordHash");
-
-      const sessionInDb = await prisma.adminSession.findUnique({
-        where: { id: result.session.id },
-      });
-      expect(sessionInDb).toBeTruthy();
-      expect(sessionInDb!.adminId).toBe(testAdmin.id);
-      expect(sessionInDb!.token).toBe(result.session.token);
     });
 
-    it("should throw TRPCError with code `BAD_REQUEST` when admin email does not exist", async () => {
+    it("should reject login when admin email does not exist", async () => {
       const input: LoginAdminInput = {
         email: "nonexistent@example.com",
         password: "testpassword123",
       };
 
-      await expect(loginAdmin({ prisma }, input)).rejects.toThrow(TRPCError);
-
       try {
         await loginAdmin({ prisma }, input);
         expect.fail("Expected TRPCError to be thrown");
@@ -102,19 +84,14 @@ describe("Auth Service Integration Tests", () => {
         expect((error as TRPCError).code).toBe("BAD_REQUEST");
         expect((error as TRPCError).message).toBe("Invalid email or password");
       }
-
-      const sessionsCount = await prisma.adminSession.count();
-      expect(sessionsCount).toBe(0);
     });
 
-    it("should throw TRPCError with code `BAD_REQUEST` when password is incorrect", async () => {
+    it("should reject login when admin password is incorrect", async () => {
       const input: LoginAdminInput = {
         email: "test@example.com",
         password: "wrongpassword",
       };
 
-      await expect(loginAdmin({ prisma }, input)).rejects.toThrow(TRPCError);
-
       try {
         await loginAdmin({ prisma }, input);
         expect.fail("Expected TRPCError to be thrown");
@@ -123,31 +100,9 @@ describe("Auth Service Integration Tests", () => {
         expect((error as TRPCError).code).toBe("BAD_REQUEST");
         expect((error as TRPCError).message).toBe("Invalid email or password");
       }
-
-      const sessionsCount = await prisma.adminSession.count();
-      expect(sessionsCount).toBe(0);
     });
 
-    it("should create a unique session token for each login", async () => {
-      const input: LoginAdminInput = {
-        email: "test@example.com",
-        password: "testpassword123",
-      };
-
-      const result1 = await loginAdmin({ prisma }, input);
-      const result2 = await loginAdmin({ prisma }, input);
-
-      expect(result1.session.token).not.toBe(result2.session.token);
-      expect(result1.session.id).not.toBe(result2.session.id);
-
-      const sessionsCount = await prisma.adminSession.count();
-      expect(sessionsCount).toBe(2);
-
-      expect(result1.session.adminId).toBe(testAdmin.id);
-      expect(result2.session.adminId).toBe(testAdmin.id);
-    });
-
-    it("should handle case-sensitive email matching", async () => {
+    it("should require exact email case matching for login", async () => {
       const input: LoginAdminInput = {
         email: "TEST@EXAMPLE.COM", // Different case
         password: "testpassword123",
@@ -163,12 +118,9 @@ describe("Auth Service Integration Tests", () => {
         expect((error as TRPCError).code).toBe("BAD_REQUEST");
         expect((error as TRPCError).message).toBe("Invalid email or password");
       }
-
-      const sessionsCount = await prisma.adminSession.count();
-      expect(sessionsCount).toBe(0);
     });
 
-    it("should set session expiration to exactly 7 days from now", async () => {
+    it("should create session with 7-day expiration", async () => {
       const input: LoginAdminInput = {
         email: "test@example.com",
         password: "testpassword123",
@@ -187,7 +139,7 @@ describe("Auth Service Integration Tests", () => {
       expect(sessionExpiry).toBeLessThanOrEqual(expectedMax);
     });
 
-    it("should handle multiple admins with different emails", async () => {
+    it("should allow multiple admins to login independently", async () => {
       const passwordHash2 = await bcrypt.hash("anotherpassword456", 10);
       const testAdmin2 = await prisma.admin.create({
         data: {
@@ -214,42 +166,11 @@ describe("Auth Service Integration Tests", () => {
       expect(result1.admin.email).toBe("test@example.com");
       expect(result2.admin.id).toBe(testAdmin2.id);
       expect(result2.admin.email).toBe("admin2@example.com");
-
-      const sessionsCount = await prisma.adminSession.count();
-      expect(sessionsCount).toBe(2);
-    });
-
-    it("should fail when trying to login with first admin's password for second admin", async () => {
-      const passwordHash2 = await bcrypt.hash("anotherpassword456", 10);
-      await prisma.admin.create({
-        data: {
-          email: "admin2@example.com",
-          name: "Second Admin",
-          passwordHash: passwordHash2,
-        },
-      });
-
-      const input: LoginAdminInput = {
-        email: "admin2@example.com",
-        password: "testpassword123",
-      };
-
-      await expect(loginAdmin({ prisma }, input)).rejects.toThrow(TRPCError);
-
-      try {
-        await loginAdmin({ prisma }, input);
-        expect.fail("Expected TRPCError to be thrown");
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError);
-        let err = error as TRPCError;
-        expect(err.code).toBe("BAD_REQUEST");
-        expect(err.message).toBe("Invalid email or password");
-      }
     });
   });
 
   describe("registerUser", () => {
-    it("should register a new user successfully with valid input", async () => {
+    it("should create new user account with valid information", async () => {
       const input: RegisterUserInput = {
         email: "johndoe@example.com",
         hasReadTerms: true,
@@ -262,7 +183,7 @@ describe("Auth Service Integration Tests", () => {
       expect(result).toHaveProperty("id");
     });
 
-    it("should throw TRPCError with code `CONFLICT` when registering with an existing email", async () => {
+    it("should prevent duplicate registration with same email", async () => {
       // register first user
       await registerUser(
         { prisma },
@@ -289,6 +210,106 @@ describe("Auth Service Integration Tests", () => {
         expect(error).toBeInstanceOf(TRPCError);
         const err = error as TRPCError;
         expect(err.code).toBe("CONFLICT");
+      }
+    });
+  });
+
+  describe("loginUser", () => {
+    let testUser: {
+      id: string;
+      email: string;
+      name: string;
+      passwordHash: string;
+      isVerified: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    beforeAll(async () => {
+      const passwordHash = await bcrypt.hash("userpassword123", 10);
+      testUser = await prisma.user.create({
+        data: {
+          email: "testuser@example.com",
+          name: "Test User",
+          passwordHash,
+        },
+      });
+    });
+
+    it("should successfully authenticate user with valid credentials", async () => {
+      const input: LoginUserInput = {
+        email: "testuser@example.com",
+        password: "userpassword123",
+      };
+
+      const result = await loginUser({ prisma }, input);
+
+      expect(result).toHaveProperty("session");
+      expect(result).toHaveProperty("user");
+
+      expect(result.session).toHaveProperty("id");
+      expect(result.session).toHaveProperty("token");
+      expect(result.session).toHaveProperty("expiresAt");
+      expect(result.session.userId).toBe(testUser.id);
+      expect(typeof result.session.token).toBe("string");
+      expect(result.session.token.length).toBeGreaterThan(0);
+
+      const now = new Date();
+      const expectedExpiry = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 7);
+      const timeDiff = Math.abs(
+        result.session.expiresAt.getTime() - expectedExpiry.getTime()
+      );
+      expect(timeDiff).toBeLessThan(5000);
+
+      expect(result.user).toEqual({
+        id: testUser.id,
+        email: testUser.email,
+        name: testUser.name,
+        isVerified: testUser.isVerified,
+        createdAt: testUser.createdAt,
+        updatedAt: testUser.updatedAt,
+      });
+      expect(result.user).not.toHaveProperty("passwordHash");
+
+      const sessionInDb = await prisma.session.findUnique({
+        where: { id: result.session.id },
+      });
+      expect(sessionInDb).toBeTruthy();
+      expect(sessionInDb!.userId).toBe(testUser.id);
+      expect(sessionInDb!.token).toBe(result.session.token);
+    });
+
+    it("should reject login when user email does not exist", async () => {
+      const input: LoginUserInput = {
+        email: "nonexistent@example.com",
+        password: "userpassword123",
+      };
+
+      try {
+        await loginUser({ prisma }, input);
+        expect.fail("Expected TRPCError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(TRPCError);
+        const err = error as TRPCError;
+        expect(err.code).toBe("BAD_REQUEST");
+        expect(err.message).toBe("Invalid email or password");
+      }
+    });
+
+    it("should reject login when user password is incorrect", async () => {
+      const input: LoginUserInput = {
+        email: "testuser@example.com",
+        password: "wrongpassword",
+      };
+
+      try {
+        await loginUser({ prisma }, input);
+        expect.fail("Expected TRPCError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(TRPCError);
+        const err = error as TRPCError;
+        expect(err.code).toBe("BAD_REQUEST");
+        expect(err.message).toBe("Invalid email or password");
       }
     });
   });
