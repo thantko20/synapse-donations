@@ -8,11 +8,6 @@ import type {
   LoginUserInput,
 } from "@repo/shared/schemas";
 import { prisma } from "../prisma/index.js";
-import { resetDatabase } from "../vitest.setup.js";
-
-beforeAll(async () => {
-  await resetDatabase(prisma);
-});
 
 describe("Auth Service Integration Tests", () => {
   let testAdmin: {
@@ -56,7 +51,7 @@ describe("Auth Service Integration Tests", () => {
       const now = new Date();
       const expectedExpiry = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 7);
       const timeDiff = Math.abs(
-        result.session.expiresAt.getTime() - expectedExpiry.getTime()
+        result.session.expiresAt.getTime() - expectedExpiry.getTime(),
       );
       expect(timeDiff).toBeLessThan(5000);
 
@@ -192,7 +187,7 @@ describe("Auth Service Integration Tests", () => {
           name: "Jane Doe",
           password: "anothersecurepassword",
           hasReadTerms: true,
-        }
+        },
       );
 
       // use the same email to register again
@@ -257,7 +252,7 @@ describe("Auth Service Integration Tests", () => {
       const now = new Date();
       const expectedExpiry = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 7);
       const timeDiff = Math.abs(
-        result.session.expiresAt.getTime() - expectedExpiry.getTime()
+        result.session.expiresAt.getTime() - expectedExpiry.getTime(),
       );
       expect(timeDiff).toBeLessThan(5000);
 

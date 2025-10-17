@@ -8,11 +8,6 @@ import {
 import { prisma } from "../prisma/index.js";
 import bcrypt from "bcrypt";
 import { TRPCError } from "@trpc/server";
-import { resetDatabase } from "../vitest.setup.js";
-
-beforeAll(async () => {
-  await resetDatabase(prisma);
-});
 
 describe("Organizations Service Integration Tests", () => {
   describe("registerOrganization", () => {
@@ -40,7 +35,7 @@ describe("Organizations Service Integration Tests", () => {
           prisma: prisma,
           userId: testUserIdOrg,
         },
-        input
+        input,
       );
 
       expect(result).toHaveProperty("id");
@@ -67,7 +62,7 @@ describe("Organizations Service Integration Tests", () => {
           prisma: prisma,
           userId: testUserIdOrg,
         },
-        input1
+        input1,
       );
 
       try {
@@ -76,7 +71,7 @@ describe("Organizations Service Integration Tests", () => {
             prisma: prisma,
             userId: testUserIdOrg,
           },
-          input2
+          input2,
         );
         expect.fail("Expected error for duplicate legal name");
       } catch (error) {
@@ -84,7 +79,7 @@ describe("Organizations Service Integration Tests", () => {
         const err = error as TRPCError;
         expect(err.code).toBe("CONFLICT");
         expect(err.message).toBe(
-          `Organization with legal name "${input2.legalName}" already exists.`
+          `Organization with legal name "${input2.legalName}" already exists.`,
         );
       }
     });

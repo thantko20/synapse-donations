@@ -29,7 +29,7 @@ type LoginAdminCtx = BaseCtx & {};
 
 export const loginAdmin = async (
   ctx: LoginAdminCtx,
-  input: LoginAdminInput
+  input: LoginAdminInput,
 ) => {
   const { prisma } = ctx;
   const admin = await prisma.admin.findFirst({
@@ -42,7 +42,7 @@ export const loginAdmin = async (
   }
   const isValidPassword = await bcrypt.compare(
     input.password,
-    admin.passwordHash
+    admin.passwordHash,
   );
   if (!isValidPassword) {
     throw invalidCredentialsError();
@@ -74,7 +74,7 @@ type RegisterUserCtx = BaseCtx & {};
 
 export const registerUser = async (
   { prisma }: RegisterUserCtx,
-  input: RegisterUserInput
+  input: RegisterUserInput,
 ) => {
   const existingUser = await prisma.user.findUnique({
     select: { id: true },
@@ -112,7 +112,7 @@ export const loginUser = async (ctx: LoginUserCtx, input: LoginUserInput) => {
   }
   const isValidPassword = await bcrypt.compare(
     input.password,
-    user.passwordHash
+    user.passwordHash,
   );
   if (!isValidPassword) {
     throw invalidCredentialsError();

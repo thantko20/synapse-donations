@@ -8,7 +8,7 @@ config({ path: resolve(process.cwd(), ".env.test") });
 
 process.env.NODE_ENV = "test";
 
-export const resetDatabase = async (prisma: AppPrisma) => {
+const resetDatabase = async (prisma: AppPrisma) => {
   await prisma.$transaction(async (tx) => {
     await tx.adminSession.deleteMany();
     await tx.admin.deleteMany();
@@ -20,3 +20,7 @@ export const resetDatabase = async (prisma: AppPrisma) => {
     await tx.adminSession.deleteMany();
   });
 };
+
+export async function setup() {
+  await resetDatabase(prisma);
+}

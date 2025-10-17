@@ -11,6 +11,7 @@ export const authRouter = router({
   loginAdmin: publicProcedure
     .input(loginAdminSchema)
     .mutation(async ({ input, ctx }) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       const result = await loginAdmin({ prisma: ctx.prisma }, input);
       setCookie(ctx.c, "admin_session_token", result.session.token, {
         httpOnly: true,
