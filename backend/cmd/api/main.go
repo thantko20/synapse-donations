@@ -23,7 +23,7 @@ type handler func(c *fiber.Ctx) error
 func main() {
 
 	app := fiber.New()
-	db, err := sqlx.Connect("pgx", "postgresql://postgres:password@localhost:5432/synapse_donations_db")
+	db, err := sqlx.Connect("pgx", "postgresql://postgres:password@database:5432/synapse_donations_db")
 
 	if err != nil {
 		log.Fatalln(err)

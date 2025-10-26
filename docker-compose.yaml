@@ -1,0 +1,53 @@
+services:
+    backend:
+        build: ./backend
+        container_name: synapse-donations-backend
+        ports:
+            - "8080:8080"
+        networks:
+            - synapse-donations-backend-network
+            - synapse-donations-database-network
+        depends_on:
+            database:
+                condition: service_healthy
+    frontend:
+        build: ./frontend
+        container_name: synapse-donations-frontend
+        ports:
+            - "3000:3000"
+        networks:
+            - synapse-donations-frontend-network
+        depends_on:
+            - backend
+    goose:
+        build: ./backend/Dockerfile.goose
+        container_name: synapse-donations-migrator
+        networks:
+            - synapse-donations-database-network
+        environment:
+            GOOSE_DRIVER: postgres
+            GOOSE_MIGRATION_DIR: ./internal/migrations
+            GOOSE_DBSTRING: postgresql://postgres:password@database:5432/synapse_donations_db
+    database:
+        image: postgres:16-alpine
+        container_name: synapse-donations-database
+        environment:
+            POSTGRES_DB: synapse_donations_db
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: password
+        volumes:
+            - db_data:/var/lib/postgresql/data
+        networks:
+            - synapse-donations-database-network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+volumes:
+    db_data:
+networks:
+    synapse-donations-backend-network:
+    synapse-donations-frontend-network:
+    synapse-donations-database-network:
