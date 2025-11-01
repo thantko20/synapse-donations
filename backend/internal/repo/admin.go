@@ -2,6 +2,8 @@ package repo
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log"
 	"time"
 
@@ -59,6 +61,9 @@ func (r *adminRepo) GetOne(ctx context.Context) (*core.PlatformAdmin, error) {
 	var admin core.PlatformAdmin
 	err := r.db.GetContext(ctx, &admin, "SELECT * FROM platform_admins LIMIT 1")
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &admin, nil

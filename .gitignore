@@ -2,6 +2,10 @@
 
 !.env.example
 
+.tmp
+
+tmp
+
 # Frontend assets
 node_modules
 .DS_Store

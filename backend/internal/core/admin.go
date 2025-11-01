@@ -47,6 +47,12 @@ type PlatformAdminRepository interface {
 	GetOne(ctx context.Context) (*PlatformAdmin, error)
 }
 
+type PlatformAdminService interface {
+	CreateAdmin(ctx context.Context, dto CreatePlatformAdminDto) (*PlatformAdmin, error)
+	GetList(ctx context.Context) ([]*PlatformAdmin, error)
+	GetOne(ctx context.Context) (*PlatformAdmin, error)
+}
+
 type CreatePlatformAdminDto struct {
 	Email    string `json:"email"`
 	Name     string `json:"name"`

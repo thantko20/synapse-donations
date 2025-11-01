@@ -15,6 +15,7 @@ type Session struct {
 	UserID    uuid.UUID `db:"user_id"`
 	Token     string    `db:"token"`
 	IPAddress *string   `db:"ip_address"`
+	ExpiresAt time.Time `db:"expires_at"`
 	UserAgent *string   `db:"user_agent"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
@@ -26,6 +27,7 @@ type AdminSession struct {
 	Token     string    `db:"token"`
 	IPAddress string    `db:"ip_address"`
 	UserAgent string    `db:"user_agent"`
+	ExpiresAt time.Time `db:"expires_at"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
@@ -57,4 +59,13 @@ type LoginUserDto struct {
 
 type AdminSessionRepo interface {
 	Create(ctx context.Context, session *AdminSession) error
+}
+
+type SessionRepo interface {
+	Create(ctx context.Context, session *Session) error
+}
+
+type AuthService interface {
+	Login(ctx context.Context, dto LoginUserDto) (*Session, error)
+	LoginAdmin(ctx context.Context, dto LoginUserDto) (*AdminSession, error)
 }
