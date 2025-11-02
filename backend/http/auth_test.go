@@ -52,6 +52,7 @@ func TestAdminLogin(t *testing.T) {
 	app := server.App
 
 	for _, tc := range testCases {
+		t.Log("testing scenario: " + tc.description)
 		jsonBody, err := json.Marshal(tc.body)
 		if err != nil {
 			t.Fatalf("failed to marshal body: %v", err)
