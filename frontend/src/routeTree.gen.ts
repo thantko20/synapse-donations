@@ -9,50 +9,123 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as adminDashboardRouteImport } from './routes/(admin)/_dashboard'
+import { Route as adminAuthRouteImport } from './routes/(admin)/_auth'
+import { Route as adminDashboardIndexRouteImport } from './routes/(admin)/_dashboard/index'
+import { Route as adminAuthLoginRouteImport } from './routes/(admin)/_auth/login'
 
-const IndexRoute = IndexRouteImport.update({
+const adminDashboardRoute = adminDashboardRouteImport.update({
+  id: '/(admin)/_dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const adminAuthRoute = adminAuthRouteImport.update({
+  id: '/(admin)/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const adminDashboardIndexRoute = adminDashboardIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => adminDashboardRoute,
+} as any)
+const adminAuthLoginRoute = adminAuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => adminAuthRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/login': typeof adminAuthLoginRoute
+  '/': typeof adminDashboardIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof adminAuthLoginRoute
+  '/': typeof adminDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/(admin)/_auth': typeof adminAuthRouteWithChildren
+  '/(admin)/_dashboard': typeof adminDashboardRouteWithChildren
+  '/(admin)/_auth/login': typeof adminAuthLoginRoute
+  '/(admin)/_dashboard/': typeof adminDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/login' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/login' | '/'
+  id:
+    | '__root__'
+    | '/(admin)/_auth'
+    | '/(admin)/_dashboard'
+    | '/(admin)/_auth/login'
+    | '/(admin)/_dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  adminAuthRoute: typeof adminAuthRouteWithChildren
+  adminDashboardRoute: typeof adminDashboardRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/(admin)/_dashboard': {
+      id: '/(admin)/_dashboard'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof adminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(admin)/_auth': {
+      id: '/(admin)/_auth'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof adminAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(admin)/_dashboard/': {
+      id: '/(admin)/_dashboard/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof adminDashboardIndexRouteImport
+      parentRoute: typeof adminDashboardRoute
+    }
+    '/(admin)/_auth/login': {
+      id: '/(admin)/_auth/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof adminAuthLoginRouteImport
+      parentRoute: typeof adminAuthRoute
     }
   }
 }
 
+interface adminAuthRouteChildren {
+  adminAuthLoginRoute: typeof adminAuthLoginRoute
+}
+
+const adminAuthRouteChildren: adminAuthRouteChildren = {
+  adminAuthLoginRoute: adminAuthLoginRoute,
+}
+
+const adminAuthRouteWithChildren = adminAuthRoute._addFileChildren(
+  adminAuthRouteChildren,
+)
+
+interface adminDashboardRouteChildren {
+  adminDashboardIndexRoute: typeof adminDashboardIndexRoute
+}
+
+const adminDashboardRouteChildren: adminDashboardRouteChildren = {
+  adminDashboardIndexRoute: adminDashboardIndexRoute,
+}
+
+const adminDashboardRouteWithChildren = adminDashboardRoute._addFileChildren(
+  adminDashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  adminAuthRoute: adminAuthRouteWithChildren,
+  adminDashboardRoute: adminDashboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
