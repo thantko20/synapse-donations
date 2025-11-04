@@ -11,6 +11,7 @@ export function getRouter() {
     scrollRestoration: true,
     defaultNotFoundComponent: () => <div>404 - Page Not Found</div>,
     defaultPreload: "intent",
+    defaultErrorComponent: (props) => <div>{props.error.message}</div>,
   });
 
   setupRouterSsrQueryIntegration({

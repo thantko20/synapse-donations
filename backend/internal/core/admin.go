@@ -42,6 +42,7 @@ func (a *PlatformAdmin) ToDto() *PlatformAdminDto {
 
 type PlatformAdminRepository interface {
 	GetByEmail(ctx context.Context, email string) (*PlatformAdmin, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*PlatformAdmin, error)
 	Create(ctx context.Context, admin *PlatformAdmin) error
 	GetList(ctx context.Context) ([]*PlatformAdmin, error)
 	GetOne(ctx context.Context) (*PlatformAdmin, error)

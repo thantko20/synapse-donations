@@ -4,7 +4,7 @@ import { SectionCards } from "@/components/section-cards";
 import { createFileRoute } from "@tanstack/react-router";
 import data from "../data.json";
 
-export const Route = createFileRoute("/(admin)/_dashboard/")({
+export const Route = createFileRoute("/(admin)/a/_dashboard/")({
   component: RouteComponent,
 });
 

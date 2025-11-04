@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import data from "./data.json";
 
-export const Route = createFileRoute("/(admin)/_dashboard")({
+export const Route = createFileRoute("/(admin)/a/_dashboard")({
   component: RouteComponent,
 });
 

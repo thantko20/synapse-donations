@@ -96,3 +96,39 @@ func (s *authService) LoginAdmin(ctx context.Context, dto core.LoginUserDto) (*c
 
 	return adminSession, nil
 }
+
+func (s *authService) AuthenticateAdmin(ctx context.Context, sessionToken string) (*core.AdminSession, error) {
+	if sessionToken == "" {
+		return nil, core.ErrInvalidCredentials
+	}
+
+	session, err := s.adminSessionRepo.GetByToken(ctx, sessionToken)
+	if err != nil {
+		return nil, err
+	}
+	if session == nil {
+		return nil, core.ErrInvalidCredentials
+	}
+	if time.Now().After(session.ExpiresAt) {
+		return nil, core.ErrInvalidCredentials
+	}
+
+	return session, nil
+}
+
+func (s *authService) GetAuthAdminByToken(ctx context.Context, token string) (*core.PlatformAdmin, error) {
+	session, err := s.AuthenticateAdmin(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	admin, err := s.adminRepo.GetByID(ctx, session.AdminID)
+	if err != nil {
+		return nil, err
+	}
+	if admin == nil {
+		return nil, core.ErrInvalidCredentials
+	}
+
+	return admin, nil
+}

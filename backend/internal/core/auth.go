@@ -59,6 +59,7 @@ type LoginUserDto struct {
 
 type AdminSessionRepo interface {
 	Create(ctx context.Context, session *AdminSession) error
+	GetByToken(ctx context.Context, token string) (*AdminSession, error)
 }
 
 type SessionRepo interface {
@@ -68,4 +69,14 @@ type SessionRepo interface {
 type AuthService interface {
 	Login(ctx context.Context, dto LoginUserDto) (*Session, error)
 	LoginAdmin(ctx context.Context, dto LoginUserDto) (*AdminSession, error)
+	AuthenticateAdmin(ctx context.Context, sessionToken string) (*AdminSession, error)
+	GetAuthAdminByToken(ctx context.Context, token string) (*PlatformAdmin, error)
+}
+
+type AuthAdminDto struct {
+	ID        uuid.UUID `db:"id"`
+	Email     string    `db:"email"`
+	Name      string    `db:"name"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }

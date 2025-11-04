@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/thantko20/synapse-donations/backend/internal/core"
 )
@@ -34,6 +35,18 @@ func (r *adminRepo) GetByEmail(ctx context.Context, email string) (*core.Platfor
 
 	log.Printf("%v", admin)
 
+	return &admin, nil
+}
+
+func (r *adminRepo) GetByID(ctx context.Context, id uuid.UUID) (*core.PlatformAdmin, error) {
+	var admin core.PlatformAdmin
+	err := r.db.GetContext(ctx, &admin, "SELECT * FROM platform_admins WHERE id = $1", id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
 	return &admin, nil
 }
 

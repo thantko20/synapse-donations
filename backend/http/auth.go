@@ -64,3 +64,31 @@ func setSessionCookie(c *fiber.Ctx, session core.Session) {
 
 	c.Cookie(cookie)
 }
+
+func (s *Server) getAuthAdminHandler(c *fiber.Ctx) error {
+	token := c.Cookies("admin_session_token")
+	if token == "" {
+		return Unauthorized(c, CodeInvalidCredentials, "Missing admin session")
+	}
+
+	admin, err := s.AuthService.GetAuthAdminByToken(c.Context(), token)
+	if err != nil {
+		if errors.Is(err, core.ErrInvalidCredentials) {
+			return Unauthorized(c, CodeInvalidCredentials, "Invalid admin session")
+		}
+		return InternalError(c, err)
+	}
+	if admin == nil {
+		return Unauthorized(c, CodeInvalidCredentials, "Invalid admin session")
+	}
+
+	dto := core.AuthAdminDto{
+		ID:        admin.ID,
+		Email:     admin.Email,
+		Name:      admin.Name,
+		CreatedAt: admin.CreatedAt,
+		UpdatedAt: admin.UpdatedAt,
+	}
+
+	return OK(c, dto, "Fetched admin successfully")
+}

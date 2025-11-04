@@ -95,4 +95,5 @@ func (s *Server) registerAuthRoutes() {
 
 	adminRoutes.Post("/login", s.loginUserHandler)
 	adminRoutes.Post("/login/admin", s.loginAdminHandler)
+	adminRoutes.Get("/admin/me", s.getAuthAdminHandler)
 }

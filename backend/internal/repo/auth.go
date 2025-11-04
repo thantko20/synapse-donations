@@ -2,6 +2,8 @@ package repo
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -26,6 +28,25 @@ func (r *adminSessionRepo) Create(ctx context.Context, session *core.AdminSessio
 	`
 	_, err := r.db.NamedExecContext(ctx, stmt, session)
 	return err
+}
+
+func (r *adminSessionRepo) GetByToken(ctx context.Context, token string) (*core.AdminSession, error) {
+	var session core.AdminSession
+	query := `
+	SELECT id, admin_id, token, ip_address, user_agent, expires_at, created_at, updated_at
+	FROM admin_sessions
+	WHERE token = $1
+	LIMIT 1
+	`
+	err := r.db.GetContext(ctx, &session, query, token)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &session, nil
 }
 
 func NewAdminSessionRepo(db *sqlx.DB) *adminSessionRepo {
