@@ -22,4 +22,4 @@ count.txt
 todos.json
 
 # Backend assets
-bin/*
+bin

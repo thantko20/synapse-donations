@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/jmoiron/sqlx"
 	"github.com/thantko20/synapse-donations/backend/internal/application"
 	"github.com/thantko20/synapse-donations/backend/internal/core"
@@ -58,6 +59,10 @@ func NewServer(db *sqlx.DB) *Server {
 		App:              app,
 		SessionRepo:      sessionRepo,
 	}
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000, http://localhost:5173",
+	}))
 
 	server.registerHelloRoutes()
 	server.registerAuthRoutes()
